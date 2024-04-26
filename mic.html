@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-time Speech-to-Text Transcription</title>
+</head>
+<body style="font-family:arial">
+  <h1>Real-time Speech-to-Text Transcription</h1>
+  <div>Status: <span id="status">Idle</span></div></br>
+  <label for="languageSelect">Select Language:</label>
+  <select id="languageSelect">
+	<option value="es-ES">Español</option>
+	<option value="en-US">English</option>
+    <!-- Add more language options here -->
+  </select>
+  <button id="startButton" style="background:#b5ffad;">Start Transcription</button>
+  <button id="stopButton" style="background:#b5ffad;" disabled>Stop Transcription</button>
+  <button id="clearButton" style="background:#ffbcbc;">Clear Transcription</button>
+    <br><br>
+  <textarea id="transcription" rows="20" cols="80"></textarea>
+
+  <script>
+    // Get references to HTML elements
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const transcriptionDiv = document.getElementById('transcription');
+    const languageSelect = document.getElementById('languageSelect');
+	const statusLabel = document.getElementById('status'); // Add this line to get reference to the status label element
+
+    // Initialize the SpeechRecognition object
+    // Check if SpeechRecognition API is available in the browser
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+		const SpeechRecognition =
+		window.SpeechRecognition ||
+		window.mozSpeechRecognition ||
+		window.webkitSpeechRecognition ||
+		window.msSpeechRecognition;
+	  const recognition = new SpeechRecognition();
+	  
+	// Set recognition properties
+	recognition.continuous = true;
+	recognition.interimResults = true;
+	recognition.lang = languageSelect.value; // Set initial language based on the default selection
+	  
+	let finalTranscript = ''; // Variable to store the final transcribed text
+
+    // Event listener when the speech recognition service returns a result
+    recognition.onresult = event => {
+      const result = event.results[event.results.length - 1];
+      const transcript = result[0].transcript;
+
+      if (result.isFinal) {
+        finalTranscript += transcript + ' ';
+        transcriptionDiv.textContent = finalTranscript;
+      }
+    };  
+	
+	// Event listener for the start button
+    startButton.addEventListener('click', () => {
+      recognition.start();
+      startButton.disabled = true;
+      stopButton.disabled = false;
+	  languageSelect.disabled = true; // Disable the language selection dropdown
+	  statusLabel.textContent = 'Transcribing...'; // Update the status to "Transcribing..."
+    });
+
+    // Event listener for the stop button
+    stopButton.addEventListener('click', () => {
+      recognition.stop();
+      startButton.disabled = false;
+      stopButton.disabled = true;
+	  languageSelect.disabled = false; // Enable the language selection dropdown back
+	  statusLabel.textContent = 'Stopped'; // Change the status back to "Stopped"
+    });
+
+    // Event listener when the recognition service ends (e.g., when the user stops talking)
+    recognition.onend = () => {
+      startButton.disabled = false;
+      stopButton.disabled = true;
+	  statusLabel.textContent = 'Stopped'; // Change the status back to "Stopped"
+    };
+
+    // Event listener for language selection change
+    languageSelect.addEventListener('change', () => {
+      recognition.lang = languageSelect.value;
+    });
+	
+	// Get references to the clear button and transcription textarea
+	const clearButton = document.getElementById('clearButton');
+	const transcriptionTextarea = document.getElementById('transcription');
+	
+	// Event listener for the clear button
+	clearButton.addEventListener('click', () => {
+	  finalTranscript = ''; // Reset the finalTranscript variable to clear the transcribed text
+	  transcriptionDiv.textContent = ''; // Also, update the visible content of the textarea to clear the text
+	});
+	
+	
+	} else {
+	  // If SpeechRecognition API is not available, display a message
+      statusLabel.textContent = 'Speech recognition not supported in this browser. Try Edge or Chrome';
+      startButton.disabled = true;
+      stopButton.disabled = true;
+	  clearButton.disabled = true;
+	}
+  </script>
+</body>
+</html>
